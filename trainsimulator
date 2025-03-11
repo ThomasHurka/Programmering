@@ -1,0 +1,122 @@
+import random
+import time
+
+passenger_possible_names = [
+    "John", "Smith", "Jane", "Doe", "Michael", "Johnson", "Emily", "Davis",
+    "David", "Brown", "Sarah", "Wilson", "Christopher", "Martinez", "Jessica", "Taylor",
+    "Daniel", "Anderson", "Laura", "Thomas", "James", "White", "Amanda", "Harris",
+    "Robert", "Clark", "Megan", "Lewis", "William", "Walker", "Olivia", "Hall",
+    "Matthew", "Allen", "Sophia", "Young", "Joseph", "King", "Isabella", "Wright",
+    "Benjamin", "Scott", "Emma", "Green", "Andrew", "Baker", "Madison", "Adams",
+    "Joshua", "Nelson", "Abigail", "Carter", "Ethan", "Mitchell", "Charlotte", "Perez",
+    "Alexander", "Roberts", "Mia", "Turner", "Jacob", "Phillips", "Ava", "Campbell",
+    "Henry", "Parker", "Ella", "Evans", "Samuel", "Edwards", "Chloe", "Collins",
+    "Gabriel", "Stewart", "Lily", "Sanchez", "Anthony", "Morris", "Grace", "Rogers",
+    "Nicholas", "Reed", "Victoria", "Cook", "Elijah", "Bell", "Hannah", "Murphy"
+]
+
+class Passenger:
+    def __init__(self, fname: str, lname: str, destination: int):
+        self.fname = fname
+        self.lname = lname
+        self.destination = destination
+    
+    def __repr__(self):
+        return f"{self.fname} {self.lname} : {self.destination}"
+
+class Station:
+    def __init__(self, name: str, stationId: int):
+        self.name = name
+        self.stationId = stationId
+        self.passengers = []
+    
+    def add_passenger(self, passenger):
+        self.passengers.append(passenger)
+    
+    def __repr__(self):
+        return f"{self.name} ({self.passengers})"
+
+class Wagon:
+    def __init__(self):
+        self.passengers = []
+
+    def board(self, passenger):
+        self.passengers.append(passenger)
+    
+    def getoff(self, stationId):
+        getoff_passengers = [p for p in self.passengers if p.destination == stationId]
+        self.passengers = [p for p in self.passengers if p.destination != stationId]
+        
+        return getoff_passengers
+    
+    def __repr__(self):
+        return f"Wagon (Passengers: {self.passengers})"
+
+class Train:
+    def __init__(self, line, position):
+        self.wagons = [Wagon() for _ in range(3)]
+        self.line = line
+        self.position = position
+    
+    def move(self):
+        self.position = (self.position + 1) % len(self.line.stops)
+    
+    def current_station(self):
+        return self.line.stops[self.position]
+    
+    def board_passengers(self, station):
+        for passenger in station.passengers[:]:
+            if passenger.destination in self.line.stops:
+                for wagon in self.wagons:
+                    if len(wagon.passengers) < 5:
+                        wagon.board(passenger)
+                        station.passengers.remove(passenger)
+                        break
+    
+    def disembark_passengers(self, station_id, station_name):
+        for wagon in self.wagons:
+            leaving = wagon.disembark(station_id)
+            for p in leaving:
+                print(f"{p.fname} {p.lname} got off at {station_name}")
+    
+    def __repr__(self):
+        return f"Train on {self.line.name} (Position: {self.position}, Wagons: {self.wagons})"
+
+class Line:
+    def __init__(self, name, stops):
+        self.name = name
+        self.stops = stops
+
+stations = [
+    Station("Helgez", 0), Station("Jelgeze", 1), Station("Mensike", 2), 
+    Station("Gardenfellen", 3), Station("Juville", 4), Station("Rivertown", 5)
+]
+
+lines = [
+    Line("Keleti", [0, 2, 4]), 
+    Line("Kóny", [1, 3, 5])
+]
+
+trains = [Train(lines[0], 0), Train(lines[1], 0)]
+
+for _ in range(10):
+    fname = random.choice(passenger_possible_names)
+    lname = random.choice(passenger_possible_names)
+    startStation = random.choice(stations)
+    destinationStation = random.choice([station for station in stations if station.stationId != startStation.stationId])
+    startStation.add_passenger(Passenger(fname, lname, destinationStation.stationId))
+
+for _ in range(10):
+    for train in trains:
+        stationId = train.current_station()
+        station = next(station for station in stations if station.stationId == stationId)
+        print(f"\n{train.line.name} at {station.name}")
+        train.disembark_passengers(stationId, station.name)
+        train.board_passengers(station)
+        print(f"Current Train: {train}")
+        print(f"New Destination: {station}")
+        print("\nStations:")
+        for station in stations:
+            print(station)
+        train.move()
+    time.sleep(30)
